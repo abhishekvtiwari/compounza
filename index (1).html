@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CompounZa Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ── TOKENS ── */
+[data-theme="light"] {
+  --bg:        #ffffff;
+  --surface:   #f7f7f7;
+  --surface2:  #efefef;
+  --line:      #e0e0e0;
+  --line2:     #c8c8c8;
+  --text:      #0a0a0a;
+  --text2:     #3a3a3a;
+  --text3:     #767676;
+  --inv-bg:    #0a0a0a;
+  --inv-text:  #ffffff;
+  --sip:       #059669;
+  --si:        #d97706;
+  --ci:        #2563eb;
+  --nav-bg:    rgba(255,255,255,0.92);
+}
+[data-theme="dark"] {
+  --bg:        #0c0c0c;
+  --surface:   #161616;
+  --surface2:  #202020;
+  --line:      #2a2a2a;
+  --line2:     #3a3a3a;
+  --text:      #f5f5f5;
+  --text2:     #c0c0c0;
+  --text3:     #787878;
+  --inv-bg:    #f5f5f5;
+  --inv-text:  #0c0c0c;
+  --sip:       #34d399;
+  --si:        #fbbf24;
+  --ci:        #60a5fa;
+  --nav-bg:    rgba(12,12,12,0.94);
+}
+
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background .25s, color .25s;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 200;
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: stretch;
+  height: 52px;
+  transition: background .25s, border-color .25s;
+}
+.n-brand {
+  display: flex; align-items: center;
+  padding: 0 20px;
+  font-size: 15px; font-weight: 700;
+  letter-spacing: -.02em;
+  border-right: 1px solid var(--line);
+  white-space: nowrap; flex-shrink: 0;
+  color: var(--text);
+}
+.n-brand span { color: var(--sip); }
+.n-tabs { display: flex; flex: 1; overflow-x: auto; scrollbar-width: none; }
+.n-tabs::-webkit-scrollbar { display: none; }
+.n-tab {
+  display: flex; align-items: center; padding: 0 20px;
+  font-size: 13px; font-weight: 600;
+  color: var(--text3); cursor: pointer;
+  border: none; background: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap; flex-shrink: 0;
+  transition: color .15s, border-color .15s;
+  font-family: 'IBM Plex Sans', sans-serif;
+  position: relative; top: 1px;
+}
+.n-tab:hover { color: var(--text2); }
+.n-tab.on[data-t="sip"] { color: var(--sip); border-bottom-color: var(--sip); }
+.n-tab.on[data-t="si"]  { color: var(--si);  border-bottom-color: var(--si);  }
+.n-tab.on[data-t="ci"]  { color: var(--ci);  border-bottom-color: var(--ci);  }
+
+/* theme toggle */
+.n-toggle {
+  display: flex; align-items: center;
+  padding: 0 16px; gap: 8px;
+  border-left: 1px solid var(--line);
+  cursor: pointer; flex-shrink: 0;
+}
+.tog-wrap {
+  width: 40px; height: 22px;
+  background: var(--surface2); border: 1px solid var(--line2);
+  border-radius: 11px; position: relative;
+  transition: background .25s;
+}
+[data-theme="dark"] .tog-wrap { background: var(--sip); border-color: var(--sip); }
+.tog-knob {
+  position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--text3);
+  transition: transform .22s cubic-bezier(.34,1.56,.64,1), background .22s;
+  font-size: 9px; display: flex; align-items: center; justify-content: center;
+}
+[data-theme="dark"] .tog-knob { transform: translateX(18px); background: #0c0c0c; }
+.tog-label { font-size: 12px; font-weight: 600; color: var(--text3); font-family: 'IBM Plex Mono', monospace; }
+
+/* ── PAGES ── */
+.page { display: none; }
+.page.on { display: block; }
+
+/* ── HERO ── */
+.hero {
+  padding: 40px 28px 0;
+  display: flex; justify-content: space-between;
+  align-items: flex-end; flex-wrap: wrap; gap: 16px;
+  margin-bottom: 28px;
+}
+.hero h1 {
+  font-size: 36px; font-weight: 700;
+  letter-spacing: -.03em; line-height: 1;
+}
+.hero h1 .ac { color: var(--sip); }
+.hero h1 .ac-si { color: var(--si); }
+.hero h1 .ac-ci { color: var(--ci); }
+.hero-sub {
+  font-size: 13px; font-weight: 500;
+  color: var(--text3); margin-top: 6px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.hero-formula {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; font-weight: 500;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text2);
+  flex-shrink: 0;
+}
+
+/* ── LAYOUT ── */
+.layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 20px;
+  padding: 0 28px 60px;
+}
+
+/* ── INPUT PANEL ── */
+.inp { display: flex; flex-direction: column; gap: 1px; }
+.field {
+  background: var(--surface);
+  padding: 16px 18px;
+  border-radius: 0;
+  transition: background .12s;
+}
+.field:first-child { border-radius: 10px 10px 0 0; }
+.field:last-child  { border-radius: 0 0 10px 10px; }
+.field:only-child  { border-radius: 10px; }
+.field:hover { background: var(--surface2); }
+.fl {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 10px;
+}
+.fl-name {
+  font-size: 11px; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  color: var(--text3); font-family: 'IBM Plex Mono', monospace;
+}
+.fl-val {
+  font-size: 15px; font-weight: 700;
+  color: var(--text); font-family: 'IBM Plex Mono', monospace;
+}
+
+/* number input */
+.ni {
+  display: flex; align-items: center;
+  background: var(--bg); border: 1.5px solid var(--line);
+  border-radius: 7px; overflow: hidden;
+  margin-bottom: 10px;
+  transition: border-color .15s;
+  focus-within: border-color var(--text2);
+}
+.ni:focus-within { border-color: var(--line2); }
+.ni.sip:focus-within { border-color: var(--sip); }
+.ni.si:focus-within  { border-color: var(--si);  }
+.ni.ci:focus-within  { border-color: var(--ci);  }
+.ni input[type=number] {
+  flex: 1; border: none; background: transparent;
+  padding: 9px 12px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 14px; font-weight: 600; color: var(--text);
+  outline: none; -moz-appearance: textfield; min-width: 0;
+}
+.ni input::-webkit-inner-spin-button,
+.ni input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.ni-unit {
+  padding: 0 12px; font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px; font-weight: 600; color: var(--text3);
+  background: var(--surface); border-left: 1px solid var(--line);
+  height: 100%; display: flex; align-items: center; white-space: nowrap;
+  min-height: 38px;
+}
+
+/* range */
+input[type=range] {
+  -webkit-appearance: none; width: 100%; height: 3px;
+  border-radius: 2px; background: var(--line2);
+  outline: none; cursor: pointer; display: block;
+  margin-bottom: 6px;
+}
+.sip-r::-webkit-slider-thumb { background: var(--sip); }
+.si-r::-webkit-slider-thumb  { background: var(--si);  }
+.ci-r::-webkit-slider-thumb  { background: var(--ci);  }
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 16px; height: 16px;
+  border-radius: 50%; cursor: pointer;
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 0 1.5px currentColor;
+  transition: transform .12s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+input[type=range]::-moz-range-thumb { width:16px;height:16px;border-radius:50%;border:2px solid var(--bg);cursor:pointer; }
+.r-mm { display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--text3); }
+
+/* freq */
+.frow { display:flex;gap:6px;margin-top:8px;flex-wrap:wrap; }
+.fb {
+  flex:1;min-width:56px;padding:7px 6px;text-align:center;
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+  background:var(--bg);border:1.5px solid var(--line);border-radius:6px;
+  cursor:pointer;color:var(--text3);transition:all .12s;
+}
+.fb:hover { border-color:var(--line2);color:var(--text2); }
+.fb.on-sip { background:var(--sip);border-color:var(--sip);color:#fff; }
+.fb.on-ci  { background:var(--ci); border-color:var(--ci); color:#fff; }
+[data-theme="dark"] .fb.on-sip { color:#0c0c0c; }
+[data-theme="dark"] .fb.on-ci  { color:#0c0c0c; }
+
+/* ── OUTPUT ── */
+.out { display:flex;flex-direction:column;gap:16px; }
+
+/* result hero */
+.rcard {
+  background: var(--inv-bg); color: var(--inv-text);
+  border-radius: 12px; padding: 24px 28px;
+  position: relative; overflow: hidden;
+}
+.rcard-tag { font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;opacity:.5;margin-bottom:8px; }
+.rcard-num {
+  font-size: 48px; font-weight: 700; letter-spacing: -.04em;
+  line-height: 1; margin-bottom: 12px;
+}
+.rcard-num.sip { color: var(--sip); }
+.rcard-num.si  { color: var(--si);  }
+.rcard-num.ci  { color: var(--ci);  }
+.rcard-meta { display:flex;flex-wrap:wrap;gap:6px 20px; }
+.rcard-meta span {
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;font-weight:500;opacity:.6;
+}
+.rcard-meta span b { opacity:1;font-weight:700;color:var(--inv-text); }
+
+/* stat row */
+.srow { display:grid;grid-template-columns:repeat(3,1fr);gap:10px; }
+.sbox {
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:14px 16px;
+  transition:background .25s,border-color .25s;
+}
+.sbox-lbl { font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:4px;font-family:'IBM Plex Mono',monospace; }
+.sbox-val { font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.02em; }
+.sbox-val.g { color:var(--sip); }
+.sbox-val.a { color:var(--si);  }
+.sbox-val.i { color:var(--ci);  }
+
+/* donut row */
+.drow { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
+.dbox {
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:16px;
+  display:flex;align-items:center;gap:14px;
+  transition:background .25s;
+}
+.dbox canvas { flex-shrink:0; }
+.dleg { display:flex;flex-direction:column;gap:8px;flex:1;min-width:0; }
+.dleg-row { display:flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:500; }
+.dleg-dot { width:8px;height:8px;border-radius:2px;flex-shrink:0; }
+.dleg-lbl { color:var(--text3);flex:1; }
+.dleg-val { color:var(--text);font-weight:700; }
+
+/* chart */
+.cbox {
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:18px 20px 14px;
+  transition:background .25s;
+}
+.cbox-top { display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px; }
+.cbox-top h3 { font-size:13px;font-weight:700;letter-spacing:-.01em; }
+.cleg { display:flex;gap:14px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--text3);flex-wrap:wrap; }
+.cleg span { display:flex;align-items:center;gap:5px; }
+.cleg-dot { width:8px;height:8px;border-radius:2px;flex-shrink:0; }
+.ccanvas { position:relative;width:100%;height:200px; }
+
+/* table */
+.tbox { background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;transition:background .25s; }
+.tbox-top { display:flex;justify-content:space-between;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line); }
+.tbox-top h3 { font-size:13px;font-weight:700; }
+.tbox-top span { font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;color:var(--text3); }
+.tscroll { max-height:200px;overflow-y:auto;overflow-x:auto; }
+.tscroll::-webkit-scrollbar { width:3px;height:3px; }
+.tscroll::-webkit-scrollbar-thumb { background:var(--line2);border-radius:2px; }
+table { width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12px; }
+thead th { padding:9px 16px;text-align:left;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface2);white-space:nowrap; }
+thead th:not(:first-child) { text-align:right; }
+tbody td { padding:9px 16px;border-bottom:1px solid var(--line);color:var(--text2);font-weight:500;white-space:nowrap; }
+tbody td:not(:first-child) { text-align:right; }
+tbody tr:last-child td { border-bottom:none; }
+tbody tr:hover td { background:var(--surface2);color:var(--text); }
+.tg { color:var(--sip)!important;font-weight:700!important; }
+.ta { color:var(--si)!important; font-weight:700!important; }
+.ti { color:var(--ci)!important; font-weight:700!important; }
+
+/* ── MOBILE BOTTOM NAV ── */
+@media (max-width: 600px) {
+  .n-tabs { display: none; }
+  .tog-label { display: none; }
+  .bbar {
+    display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+    background: var(--nav-bg); border-top: 1px solid var(--line);
+    backdrop-filter: blur(20px);
+  }
+  .bbar-btn {
+    flex: 1; padding: 10px 6px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px; font-weight: 700;
+    color: var(--text3); background: none; border: none; cursor: pointer;
+    transition: color .12s;
+  }
+  .bbar-icon { font-size: 16px; line-height: 1; }
+  .bbar-btn.on[data-t="sip"] { color: var(--sip); }
+  .bbar-btn.on[data-t="si"]  { color: var(--si);  }
+  .bbar-btn.on[data-t="ci"]  { color: var(--ci);  }
+  body { padding-bottom: 64px; }
+  nav { padding: 0; }
+  .n-brand { padding: 0 16px; flex: 1; }
+  .n-toggle { padding: 0 14px; }
+}
+@media (min-width: 601px) { .bbar { display: none; } }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 920px) {
+  .layout { grid-template-columns: 1fr; padding: 0 20px 60px; }
+  .hero { padding: 28px 20px 0; }
+}
+@media (max-width: 600px) {
+  .hero { padding: 20px 16px 0; }
+  .layout { padding: 0 16px 60px; }
+  .hero h1 { font-size: 28px; }
+  .rcard-num { font-size: 36px; }
+  .srow { grid-template-columns: 1fr 1fr; }
+  .srow .sbox:last-child { grid-column: 1/-1; }
+  .drow { grid-template-columns: 1fr; }
+}
+@media (max-width: 380px) {
+  .srow { grid-template-columns: 1fr; }
+  .srow .sbox:last-child { grid-column: auto; }
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.page.on .rcard  { animation: fadeUp .25s ease both; }
+.page.on .srow   { animation: fadeUp .25s ease .04s both; }
+.page.on .drow   { animation: fadeUp .25s ease .07s both; }
+.page.on .cbox   { animation: fadeUp .25s ease .10s both; }
+.page.on .tbox   { animation: fadeUp .25s ease .13s both; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="n-brand">Compoun<span>Za</span></div>
+  <div class="n-tabs">
+    <button class="n-tab on" data-t="sip" onclick="go('sip',this)">SIP</button>
+    <button class="n-tab" data-t="si"  onclick="go('si',this)">Simple Interest</button>
+    <button class="n-tab" data-t="ci"  onclick="go('ci',this)">Compound Interest</button>
+  </div>
+  <div class="n-toggle" onclick="toggleTheme()">
+    <div class="tog-wrap"><div class="tog-knob"><span id="ti">☀</span></div></div>
+    <span class="tog-label" id="tl">Light</span>
+  </div>
+</nav>
+
+<!-- BOTTOM NAV (mobile) -->
+<div class="bbar">
+  <button class="bbar-btn on" data-t="sip" onclick="go('sip',this,1)"><span class="bbar-icon">📈</span>SIP</button>
+  <button class="bbar-btn" data-t="si"  onclick="go('si',this,1)"><span class="bbar-icon">💰</span>Simple</button>
+  <button class="bbar-btn" data-t="ci"  onclick="go('ci',this,1)"><span class="bbar-icon">🔁</span>Compound</button>
+  <button class="bbar-btn" onclick="toggleTheme()"><span class="bbar-icon" id="ti2">☀</span><span>Theme</span></button>
+</div>
+
+<!-- ══════ SIP ══════ -->
+<div class="page on" id="p-sip">
+  <div class="hero">
+    <div>
+      <h1><span class="ac">SIP</span> Calculator</h1>
+      <div class="hero-sub">Type a value or drag the slider · Lumpsum + Monthly SIP</div>
+    </div>
+    <div class="hero-formula">M × [(1+r)ⁿ − 1] / r × (1+r)</div>
+  </div>
+  <div class="layout">
+    <div class="inp">
+
+      <div class="field">
+        <div class="fl"><span class="fl-name">Monthly SIP</span><span class="fl-val" id="s-dm">₹5,000</span></div>
+        <div class="ni sip">
+          <input type="number" id="s-nm" value="5000" min="100" placeholder="5000" oninput="n2r('s-nm','s-rm',100,200000);cSIP()">
+          <span class="ni-unit">₹ / mo</span>
+        </div>
+        <input type="range" class="sip-r" id="s-rm" min="500" max="200000" step="500" value="5000" oninput="r2n('s-rm','s-nm');cSIP()">
+        <div class="r-mm"><span>₹500</span><span>₹2L</span></div>
+      </div>
+
+      <div class="field">
+        <div class="fl"><span class="fl-name">Lumpsum (optional)</span><span class="fl-val" id="s-dl">₹0</span></div>
+        <div class="ni sip">
+          <input type="number" id="s-nl" value="0" min="0" placeholder="0" oninput="n2r('s-nl','s-rl',0,5000000);cSIP()">
+          <span class="ni-unit">₹</span>
+        </div>
+        <input type="range" class="sip-r" id="s-rl" min="0" max="5000000" step="10000" value="0" oninput="r2n('s-rl','s-nl');cSIP()">
+        <div class="r-mm"><span>₹0</span><span>₹50L</span></div>
+      </div>
+
+      <div class="field">
+        <div class="fl"><span class="fl-name">Annual Return</span><span class="fl-val" id="s-dr">12.0%</span></div>
+        <div class="ni sip">
+          <input type="number" id="s-nr" value="12" min="0.1" max="100" step="0.5" placeholder="12" oninput="n2r('s-nr','s-rr',0.5,30);cSIP()">
+          <span class="ni-unit">% p.a.</span>
+        </div>
+        <input type="range" class="sip-r" id="s-rr" min="0.5" max="30" step="0.5" value="12" oninput="r2n('s-rr','s-nr');cSIP()">
+        <div class="r-mm"><span>0.5%</span><span>30%</span></div>
+      </div>
+
+      <div class="field">
+        <div class="fl"><span class="fl-name">Duration</span><span class="fl-val" id="s-dy">15 years</span></div>
+        <div class="ni sip">
+          <input type="number" id="s-ny" value="15" min="1" max="50" placeholder="15" oninput="n2r('s-ny','s-ry',1,40);cSIP()">
+          <span class="ni-unit">years</span>
+        </div>
+        <input type="range" class="sip-r" id="s-ry" min="1" max="40" step="1" value="15" oninput="r2n('s-ry','s-ny');cSIP()">
+        <div class="r-mm"><span>1 yr</span><span>40 yrs</span></div>
+      </div>
+
+      <div class="field">
+        <div class="fl"><span class="fl-name">Annual Step-up</span><span class="fl-val" id="s-ds">0%</span></div>
+        <div class="ni sip">
+          <input type="number" id="s-ns" value="0" min="0" max="100" placeholder="0" oninput="n2r('s-ns','s-rs',0,25);cSIP()">
+          <span class="ni-unit">% p.a.</span>
+        </div>
+        <input type="range" class="sip-r" id="s-rs" min="0" max="25" step="1" value="0" oninput="r2n('s-rs','s-ns');cSIP()">
+        <div class="r-mm"><span>0%</span><span>25%</span></div>
+      </div>
+
+      <div class="field">
+        <div class="fl"><span class="fl-name">Compounding</span></div>
+        <div class="frow">
+          <button class="fb" data-n="1"   onclick="setSF(this)">Annual</button>
+          <button class="fb" data-n="4"   onclick="setSF(this)">Quarterly</button>
+          <button class="fb on-sip" data-n="12"  onclick="setSF(this)">Monthly</button>
+          <button class="fb" data-n="365" onclick="setSF(this)">Daily</button>
+        </div>
+      </div>
+
+    </div>
+    <div class="out">
+      <div class="rcard">
+        <div class="rcard-tag">Estimated Corpus after <span id="s-oy">15</span> years</div>
+        <div class="rcard-num sip" id="s-ot">—</div>
+        <div class="rcard-meta">
+          <span>Invested <b id="s-oi">—</b></span>
+          <span>Gained <b id="s-og">—</b></span>
+          <span>Multiplier <b id="s-ox">—</b></span>
+        </div>
+      </div>
+      <div class="srow">
+        <div class="sbox"><div class="sbox-lbl">Total Invested</div><div class="sbox-val" id="s-si">—</div></div>
+        <div class="sbox"><div class="sbox-lbl">Wealth Gained</div><div class="sbox-val g" id="s-sg">—</div></div>
+        <div class="sbox"><div class="sbox-lbl">Returns</div><div class="sbox-val g" id="s-sp">—</div></div>
+      </div>
+      <div class="drow">
+        <div class="dbox">
+          <canvas id="s-d1" width="76" height="76"></canvas>
+          <div class="dleg">
+            <div class="dleg-row"><span class="dleg-dot" style="background:var(--sip)"></span><span class="dleg-lbl">Gains</span><span class="dleg-val" id="s-d1g">—</span></div>
+            <div class="dleg-row"><span class="dleg-dot" style="background:var(--line2)"></span><span class="dleg-lbl">Invested</span><span class="dleg-val" id="s-d1i">—</span></div>
+          </div>
+        </div>
+        <div class="dbox">
+          <canvas id="s-d2" width="76" height="76"></canvas>
+          <div class="dleg">
+            <div class="dleg-row"><span class="dleg-dot" style="background:var(--sip)"></span><span class="dleg-lbl">Corpus</span><span class="dleg-val" id="s-d2c">—</span></div>
+            <div class="dleg-row"><span class="dleg-dot" style="background:var(--ci)"></span><span class="dleg-lbl">×</span><span class="dleg-val" id="s-d2x">—</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="cbox">
+        <div class="cbox-top">
+          <h3>Growth Trajectory</h3>
+          <div class="cleg">
+            <span><span class="cleg-dot" style="background:var(--sip)"></span>Corpus</span>
+            <span><span class="cleg-dot" style="background:var(--line2)"></span>Invested</span>
+          </div>
+        </div>
+        <div class="ccanvas"><canvas id="s-chart"></canvas></div>
+      </div>
+      <div class="tbox">
+        <div class="tbox-top"><h3>Year-by-year Breakdown</h3><span>scroll ↓</span></div>
+        <div class="tscroll"><table><thead><tr><th>Year</th><th>SIP/mo</th><th>Invested</th><th>Corpus</th><th>Gain</th></tr></thead><tbody id="s-tb"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ SI ══════ -->
+<div class="page" id="p-si">
+  <div class="hero">
+    <div>
+      <h1><span class="ac-si">Simple</span> Interest</h1>
+      <div class="hero-sub">Interest earned only on the original principal amount</div>
+    </div>
+    <div class="hero-formula">SI = P × R × T ÷ 100</div>
+  </div>
+  <div class="layout">
+    <div class="inp">
+      <div class="field">
+        <div class="fl"><span class="fl-name">Principal</span><span class="fl-val" id="si-dp">₹1,00,000</span></div>
+        <div class="ni si"><input type="number" id="si-np" value="100000" min="1" placeholder="100000" oninput="n2r('si-np','si-rp',1,10000000);cSI()"><span class="ni-unit">₹</span></div>
+        <input type="range" class="si-r" id="si-rp" min="1000" max="10000000" step="1000" value="100000" oninput="r2n('si-rp','si-np');cSI()">
+        <div class="r-mm"><span>₹1K</span><span>₹1Cr</span></div>
+      </div>
+      <div class="field">
+        <div class="fl"><span class="fl-name">Annual Rate</span><span class="fl-val" id="si-dr">8.0%</span></div>
+        <div class="ni si"><input type="number" id="si-nr" value="8" min="0.01" max="999" step="0.5" placeholder="8" oninput="n2r('si-nr','si-rr',0.5,30);cSI()"><span class="ni-unit">% p.a.</span></div>
+        <input type="range" class="si-r" id="si-rr" min="0.5" max="30" step="0.5" value="8" oninput="r2n('si-rr','si-nr');cSI()">
+        <div class="r-mm"><span>0.5%</span><span>30%</span></div>
+      </div>
+      <div class="field">
+        <div class="fl"><span class="fl-name">Time Period</span><span class="fl-val" id="si-dt">5 years</span></div>
+        <div class="ni si"><input type="number" id="si-nt" value="5" min="1" max="999" placeholder="5" oninput="n2r('si-nt','si-rt',1,40);cSI()"><span class="ni-unit">years</span></div>
+        <input type="range" class="si-r" id="si-rt" min="1" max="40" step="1" value="5" oninput="r2n('si-rt','si-nt');cSI()">
+        <div class="r-mm"><span>1 yr</span><span>40 yrs</span></div>
+      </div>
+    </div>
+    <div class="out">
+      <div class="rcard">
+        <div class="rcard-tag">Total Amount (Principal + Interest)</div>
+        <div class="rcard-num si" id="si-ot">—</div>
+        <div class="rcard-meta"><span>Principal <b id="si-op">—</b></span><span>Interest <b id="si-oi">—</b></span></div>
+      </div>
+      <div class="srow">
+        <div class="sbox"><div class="sbox-lbl">Simple Interest</div><div class="sbox-val a" id="si-ss">—</div></div>
+        <div class="sbox"><div class="sbox-lbl">Total Yield</div><div class="sbox-val a" id="si-sy">—</div></div>
+        <div class="sbox"><div class="sbox-lbl">Daily Earnings</div><div class="sbox-val" id="si-sd">—</div></div>
+      </div>
+      <div class="cbox">
+        <div class="cbox-top">
+          <h3>SI vs Compound Interest</h3>
+          <div class="cleg">
+            <span><span class="cleg-dot" style="background:var(--si)"></span>Simple</span>
+            <span><span class="cleg-dot" style="background:var(--ci)"></span>Compound</span>
+            <span><span class="cleg-dot" style="background:var(--line2)"></span>Principal</span>
+          </div>
+        </div>
+        <div class="ccanvas"><canvas id="si-chart"></canvas></div>
+      </div>
+      <div class="tbox">
+        <div class="tbox-top"><h3>SI vs CI Year-by-year</h3><span>comparison</span></div>
+        <div class="tscroll"><table><thead><tr><th>Year</th><th>SI Total</th><th>SI Earned</th><th>CI Total</th><th>CI Earned</th><th>Difference</th></tr></thead><tbody id="si-tb"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ CI ══════ -->
+<div class="page" id="p-ci">
+  <div class="hero">
+    <div>
+      <h1><span class="ac-ci">Compound</span> Interest</h1>
+      <div class="hero-sub">Interest on interest — the 8th wonder of the world</div>
+    </div>
+    <div class="hero-formula">A = P × (1 + r/n)^(n×t)</div>
+  </div>
+  <div class="layout">
+    <div class="inp">
+      <div class="field">
+        <div class="fl"><span class="fl-name">Principal</span><span class="fl-val" id="ci-dp">₹1,00,000</span></div>
+        <div class="ni ci"><input type="number" id="ci-np" value="100000" min="1" placeholder="100000" oninput="n2r('ci-np','ci-rp',1,10000000);cCI()"><span class="ni-unit">₹</span></div>
+        <input type="range" class="ci-r" id="ci-rp" min="1000" max="10000000" step="1000" value="100000" oninput="r2n('ci-rp','ci-np');cCI()">
+        <div class="r-mm"><span>₹1K</span><span>₹1Cr</span></div>
+      </div>
+      <div class="field">
+        <div class="fl"><span class="fl-name">Annual Rate</span><span class="fl-val" id="ci-dr">10.0%</span></div>
+        <div class="ni ci"><input type="number" id="ci-nr" value="10" min="0.01" max="999" step="0.5" placeholder="10" oninput="n2r('ci-nr','ci-rr',0.5,30);cCI()"><span class="ni-unit">% p.a.</span></div>
+        <input type="range" class="ci-r" id="ci-rr" min="0.5" max="30" step="0.5" value="10" oninput="r2n('ci-rr','ci-nr');cCI()">
+        <div class="r-mm"><span>0.5%</span><span>30%</span></div>
+      </div>
+      <div class="field">
+        <div class="fl"><span class="fl-name">Time Period</span><span class="fl-val" id="ci-dt">10 years</span></div>
+        <div class="ni ci"><input type="number" id="ci-nt" value="10" min="1" max="999" placeholder="10" oninput="n2r('ci-nt','ci-rt',1,40);cCI()"><span class="ni-unit">years</span></div>
+        <input type="range" class="ci-r" id="ci-rt" min="1" max="40" step="1" value="10" oninput="r2n('ci-rt','ci-nt');cCI()">
+        <div class="r-mm"><span>1 yr</span><span>40 yrs</span></div>
+      </div>
+      <div class="field">
+        <div class="fl"><span class="fl-name">Compounding Frequency</span></div>
+        <div class="frow">
+          <button class="fb" data-n="1"   onclick="setCF(this)">Annual</button>
+          <button class="fb" data-n="4"   onclick="setCF(this)">Quarterly</button>
+          <button class="fb on-ci" data-n="12"  onclick="setCF(this)">Monthly</button>
+          <button class="fb" data-n="365" onclick="setCF(this)">Daily</button>
+        </div>
+      </div>
+    </div>
+    <div class="out">
+      <div class="rcard">
+        <div class="rcard-tag">Maturity Amount</div>
+        <div class="rcard-num ci" id="ci-ot">—</div>
+        <div class="rcard-meta"><span>Principal <b id="ci-op">—</b></span><span>Interest <b id="ci-oi">—</b></span><span>Multiplier <b id="ci-ox">—</b></span></div>
+      </div>
+      <div class="srow">
+        <div class="sbox"><div class="sbox-lbl">Compound Interest</div><div class="sbox-val i" id="ci-ss">—</div></div>
+        <div class="sbox"><div class="sbox-lbl">Eff. Annual Rate</div><div class="sbox-val i" id="ci-se">—</div></div>
+        <div class="sbox"><div class="sbox-lbl">Rule of 72</div><div class="sbox-val" id="ci-sr">—</div></div>
+      </div>
+      <div class="drow">
+        <div class="dbox">
+          <canvas id="ci-d1" width="76" height="76"></canvas>
+          <div class="dleg">
+            <div class="dleg-row"><span class="dleg-dot" style="background:var(--ci)"></span><span class="dleg-lbl">Interest</span><span class="dleg-val" id="ci-d1i">—</span></div>
+            <div class="dleg-row"><span class="dleg-dot" style="background:var(--line2)"></span><span class="dleg-lbl">Principal</span><span class="dleg-val" id="ci-d1p">—</span></div>
+          </div>
+        </div>
+        <div class="dbox">
+          <canvas id="ci-d2" width="76" height="76"></canvas>
+          <div class="dleg">
+            <div class="dleg-row"><span class="dleg-dot" style="background:var(--ci)"></span><span class="dleg-lbl">CI Amount</span><span class="dleg-val" id="ci-d2c">—</span></div>
+            <div class="dleg-row"><span class="dleg-dot" style="background:var(--si)"></span><span class="dleg-lbl">SI Amount</span><span class="dleg-val" id="ci-d2s">—</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="cbox">
+        <div class="cbox-top">
+          <h3>Compound vs Simple Interest</h3>
+          <div class="cleg">
+            <span><span class="cleg-dot" style="background:var(--ci)"></span>Compound</span>
+            <span><span class="cleg-dot" style="background:var(--si)"></span>Simple</span>
+            <span><span class="cleg-dot" style="background:var(--line2)"></span>Principal</span>
+          </div>
+        </div>
+        <div class="ccanvas"><canvas id="ci-chart"></canvas></div>
+      </div>
+      <div class="tbox">
+        <div class="tbox-top"><h3>Year-by-year Breakdown</h3><span>scroll ↓</span></div>
+        <div class="tscroll"><table><thead><tr><th>Year</th><th>Balance</th><th>Interest (yr)</th><th>Total CI</th><th>Extra vs SI</th></tr></thead><tbody id="ci-tb"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let sN=12, cN=12;
+const CH={};
+
+/* ── Theme ── */
+function toggleTheme(){
+  const h=document.documentElement;
+  const nxt=h.getAttribute('data-theme')==='dark'?'light':'dark';
+  h.setAttribute('data-theme',nxt);
+  const ico=nxt==='dark'?'☾':'☀';
+  const lbl=nxt==='dark'?'Dark':'Light';
+  ['ti','ti2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=ico;});
+  const tl=document.getElementById('tl');if(tl)tl.textContent=lbl;
+  localStorage.setItem('fc-theme',nxt);
+  redraw();
+}
+(function(){
+  const s=localStorage.getItem('fc-theme');
+  if(s==='dark'){
+    document.documentElement.setAttribute('data-theme','dark');
+    setTimeout(()=>{
+      ['ti','ti2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='☾';});
+      const tl=document.getElementById('tl');if(tl)tl.textContent='Dark';
+    },0);
+  }
+})();
+function redraw(){
+  const id=document.querySelector('.page.on').id.replace('p-','');
+  if(id==='sip')cSIP();else if(id==='si')cSI();else cCI();
+}
+
+/* ── Tabs ── */
+function go(id,btn,mob){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.n-tab,[data-t]').forEach(t=>t.classList.remove('on'));
+  document.getElementById('p-'+id).classList.add('on');
+  document.querySelectorAll('[data-t="'+id+'"]').forEach(el=>el.classList.add('on'));
+  if(id==='sip')cSIP();else if(id==='si')cSI();else cCI();
+  if(mob)window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ── Helpers ── */
+function n2r(nId,rId,lo,hi){const v=parseFloat(document.getElementById(nId).value)||0;document.getElementById(rId).value=Math.max(lo,Math.min(hi,v));}
+function r2n(rId,nId){document.getElementById(nId).value=document.getElementById(rId).value;}
+function gn(id){return parseFloat(document.getElementById(id).value)||0;}
+function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+
+function fi(v){
+  v=Math.round(v);
+  if(v>=10000000)return'₹'+(v/10000000).toFixed(2)+' Cr';
+  if(v>=100000)return'₹'+(v/100000).toFixed(2)+' L';
+  return'₹'+v.toLocaleString('en-IN');
+}
+function fs(v){
+  v=Math.round(v);
+  if(v>=10000000)return(v/10000000).toFixed(1)+'Cr';
+  if(v>=100000)return(v/100000).toFixed(1)+'L';
+  if(v>=1000)return(v/1000).toFixed(1)+'K';
+  return v;
+}
+
+/* ── CSS variable reader ── */
+function cv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+
+/* ── Chart tooltip theme ── */
+function tt(){
+  const dk=document.documentElement.getAttribute('data-theme')==='dark';
+  return{
+    bg:dk?'#1a1a1a':'#ffffff',
+    bc:dk?'#2a2a2a':'#e0e0e0',
+    tc:dk?'#787878':'#767676',
+    tx:dk?'#f5f5f5':'#0a0a0a',
+    grid:dk?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.06)',
+    tick:dk?'#606060':'#909090',
+  };
+}
+
+/* ── Donut ── */
+function donut(id,v1,v2,c1,c2){
+  const cv2=document.getElementById(id);if(!cv2)return;
+  const s=76,h=38,r=30,w=10;
+  cv2.width=s;cv2.height=s;
+  const ctx=cv2.getContext('2d'),tot=v1+v2;
+  ctx.clearRect(0,0,s,s);if(!tot)return;
+  [[0,v1/tot*Math.PI*2,c1],[v1/tot*Math.PI*2,Math.PI*2,c2]].forEach(([a,b,c])=>{
+    ctx.beginPath();ctx.arc(h,h,r,a-Math.PI/2,b-Math.PI/2);ctx.arc(h,h,r-w,b-Math.PI/2,a-Math.PI/2,true);ctx.closePath();ctx.fillStyle=c;ctx.fill();
+  });
+}
+
+/* ── Chart ── */
+function mkChart(id,labels,sets){
+  if(CH[id])CH[id].destroy();
+  const t=tt();
+  CH[id]=new Chart(document.getElementById(id),{
+    type:'line',data:{labels,datasets:sets},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:t.bg,borderColor:t.bc,borderWidth:1,
+          titleColor:t.tc,bodyColor:t.tx,padding:10,cornerRadius:8,
+          callbacks:{label:c=>' '+c.dataset.label+': '+fi(c.parsed.y)}
+        }
+      },
+      scales:{
+        x:{grid:{color:t.grid},ticks:{font:{family:"'IBM Plex Mono',monospace",size:10,weight:'500'},color:t.tick,autoSkip:true,maxTicksLimit:12}},
+        y:{grid:{color:t.grid},ticks:{font:{family:"'IBM Plex Mono',monospace",size:10,weight:'500'},color:t.tick,callback:v=>fs(v)}}
+      }
+    }
+  });
+}
+
+/* ════ SIP ════ */
+function setSF(b){document.querySelectorAll('#p-sip .fb').forEach(x=>x.classList.remove('on-sip'));b.classList.add('on-sip');sN=parseInt(b.dataset.n);cSIP();}
+function cSIP(){
+  const M0=gn('s-nm'),L=gn('s-nl'),r=gn('s-nr')/100,Y=Math.max(1,Math.round(gn('s-ny'))),S=gn('s-ns')/100;
+  set('s-dm',fi(M0)+'/mo');set('s-dl',fi(L));set('s-dr',(r*100).toFixed(1)+'%');
+  set('s-dy',Y+(Y===1?' year':' years'));set('s-ds',(S*100).toFixed(0)+'%');set('s-oy',Y);
+  let inv=L,corpus=L,M=M0;
+  const labels=[],cA=[],iA=[],rows=[],mr=r/12;
+  for(let y=1;y<=Y;y++){
+    let yI=0;for(let m=1;m<=12;m++){corpus=corpus*(1+mr)+M;yI+=M;}
+    inv+=yI;labels.push('Yr '+y);cA.push(+corpus.toFixed(2));iA.push(+inv.toFixed(2));
+    rows.push({y,M:Math.round(M),inv,corpus,gain:corpus-inv});if(S>0)M*=(1+S);
+  }
+  const gain=corpus-inv,pct=inv>0?(gain/inv*100).toFixed(1):0;
+  set('s-ot',fi(corpus));set('s-oi',fi(inv));set('s-og',fi(gain));set('s-ox',inv>0?(corpus/inv).toFixed(2)+'×':'—');
+  set('s-si',fi(inv));set('s-sg',fi(gain));set('s-sp',pct+'%');
+  set('s-d1g',fi(gain));set('s-d1i',fi(inv));set('s-d2c',fi(corpus));set('s-d2x',inv>0?(corpus/inv).toFixed(2)+'×':'—');
+  const sc=cv('--sip'),bd=cv('--line2'),cc=cv('--ci');
+  donut('s-d1',Math.max(0,gain),inv,sc,bd);donut('s-d2',corpus,inv,sc,cc);
+  const t=tt();
+  mkChart('s-chart',labels,[
+    {label:'Corpus',data:cA,borderColor:sc,backgroundColor:sc+'22',fill:true,tension:.4,pointRadius:0,borderWidth:2.5},
+    {label:'Invested',data:iA,borderColor:bd,fill:false,tension:0,borderDash:[5,4],pointRadius:0,borderWidth:1.5}
+  ]);
+  document.getElementById('s-tb').innerHTML=rows.map(r=>`<tr><td>${r.y}</td><td>${fi(r.M)}</td><td>${fi(r.inv)}</td><td>${fi(r.corpus)}</td><td class="tg">+${fi(r.gain)}</td></tr>`).join('');
+}
+
+/* ════ SI ════ */
+function cSI(){
+  const P=gn('si-np'),R=gn('si-nr'),T=Math.max(1,Math.round(gn('si-nt'))),r=R/100;
+  set('si-dp',fi(P));set('si-dr',R.toFixed(1)+'%');set('si-dt',T+(T===1?' year':' years'));
+  const si=P*R*T/100,tot=P+si,yld=P>0?(si/P*100).toFixed(2):0,day=P*R/100/365;
+  set('si-ot',fi(tot));set('si-op',fi(P));set('si-oi',fi(si));
+  set('si-ss',fi(si));set('si-sy',yld+'%');set('si-sd',fi(day)+'/day');
+  const labels=[],sA=[],cA=[],pA=[],rows=[];
+  for(let y=1;y<=T;y++){
+    const sv=P+P*r*y,cv2=P*Math.pow(1+r/12,12*y);
+    labels.push('Yr '+y);sA.push(+sv.toFixed(2));cA.push(+cv2.toFixed(2));pA.push(P);
+    rows.push({y,sv,si:P*r*y,cv:cv2,ci:cv2-P,diff:cv2-sv});
+  }
+  const sc=cv('--si'),cc=cv('--ci'),bd=cv('--line2');
+  mkChart('si-chart',labels,[
+    {label:'Simple',data:sA,borderColor:sc,backgroundColor:sc+'22',fill:true,tension:0,pointRadius:0,borderWidth:2.5},
+    {label:'Compound',data:cA,borderColor:cc,fill:false,tension:.4,pointRadius:0,borderWidth:2.5},
+    {label:'Principal',data:pA,borderColor:bd,fill:false,tension:0,borderDash:[4,4],pointRadius:0,borderWidth:1.5}
+  ]);
+  document.getElementById('si-tb').innerHTML=rows.map(r=>`<tr><td>${r.y}</td><td>${fi(r.sv)}</td><td class="ta">+${fi(r.si)}</td><td>${fi(r.cv)}</td><td class="ti">+${fi(r.ci)}</td><td class="ti">+${fi(r.diff)}</td></tr>`).join('');
+}
+
+/* ════ CI ════ */
+function setCF(b){document.querySelectorAll('#p-ci .fb').forEach(x=>x.classList.remove('on-ci'));b.classList.add('on-ci');cN=parseInt(b.dataset.n);cCI();}
+function cCI(){
+  const P=gn('ci-np'),R=gn('ci-nr'),T=Math.max(1,Math.round(gn('ci-nt'))),r=R/100,n=cN;
+  set('ci-dp',fi(P));set('ci-dr',R.toFixed(1)+'%');set('ci-dt',T+(T===1?' year':' years'));
+  const A=P*Math.pow(1+r/n,n*T),ci=A-P,ear=(Math.pow(1+r/n,n)-1)*100,r72=R>0?(72/R).toFixed(1)+' yrs':'—',siA=P*(1+r*T);
+  set('ci-ot',fi(A));set('ci-op',fi(P));set('ci-oi',fi(ci));set('ci-ox',P>0?(A/P).toFixed(2)+'×':'—');
+  set('ci-ss',fi(ci));set('ci-se',ear.toFixed(2)+'%');set('ci-sr',r72);
+  set('ci-d1i',fi(ci));set('ci-d1p',fi(P));set('ci-d2c',fi(A));set('ci-d2s',fi(siA));
+  const cc=cv('--ci'),sc=cv('--si'),bd=cv('--line2');
+  donut('ci-d1',Math.max(0,ci),P,cc,bd);donut('ci-d2',A,siA,cc,sc);
+  const labels=[],cA=[],sA=[],pA=[],rows=[];let prev=P;
+  for(let y=1;y<=T;y++){
+    const bal=P*Math.pow(1+r/n,n*y),sv=P*(1+r*y);
+    labels.push('Yr '+y);cA.push(+bal.toFixed(2));sA.push(+sv.toFixed(2));pA.push(P);
+    rows.push({y,bal,iy:bal-prev,tci:bal-P,vsi:bal-sv});prev=bal;
+  }
+  mkChart('ci-chart',labels,[
+    {label:'Compound',data:cA,borderColor:cc,backgroundColor:cc+'22',fill:true,tension:.4,pointRadius:0,borderWidth:2.5},
+    {label:'Simple',data:sA,borderColor:sc,fill:false,tension:0,borderDash:[5,4],pointRadius:0,borderWidth:2},
+    {label:'Principal',data:pA,borderColor:bd,fill:false,tension:0,borderDash:[3,4],pointRadius:0,borderWidth:1.5}
+  ]);
+  document.getElementById('ci-tb').innerHTML=rows.map(r=>`<tr><td>${r.y}</td><td>${fi(r.bal)}</td><td class="ti">+${fi(r.iy)}</td><td class="ti">+${fi(r.tci)}</td><td class="tg">+${fi(r.vsi)}</td></tr>`).join('');
+}
+
+cSIP();
+</script>
+</body>
+</html>
