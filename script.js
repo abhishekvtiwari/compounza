@@ -76,11 +76,30 @@ function st(id, v) { const e = document.getElementById(id); if (e) e.textContent
 /* ── Sync number → range ── */
 function syncNR(nId, rId, lo, hi) {
   const v = parseFloat(document.getElementById(nId).value) || 0;
-  document.getElementById(rId).value = Math.max(lo, Math.min(hi, v));
+  const clamped = Math.max(lo, Math.min(hi, v));
+  document.getElementById(rId).value = clamped;
+  updateSliderFill(rId);
 }
 /* ── Sync range → number ── */
 function syncRN(rId, nId) {
   document.getElementById(nId).value = document.getElementById(rId).value;
+  updateSliderFill(rId);
+}
+
+/* ── Slider fill ── */
+function updateSliderFill(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const min = parseFloat(el.min) || 0;
+  const max = parseFloat(el.max) || 100;
+  const val = parseFloat(el.value) || 0;
+  const pct = ((val - min) / (max - min)) * 100;
+  el.style.setProperty('--fill', pct.toFixed(2) + '%');
+}
+
+/* ── Init all sliders on page load ── */
+function initSliders() {
+  document.querySelectorAll('input[type="range"]').forEach(el => updateSliderFill(el.id));
 }
 
 /* ── Unified chart factory ── */
