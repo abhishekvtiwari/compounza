@@ -1,24 +1,20 @@
 /* ═══════════════════════════════════════
    COMPOUNZA — Shared JS
+   All functions are defined first, then
+   the init IIFE runs at bottom after DOM.
    ═══════════════════════════════════════ */
 
 /* ── Theme ── */
-(function () {
-  const saved = localStorage.getItem('cz-theme') || 'dark';
-  document.documentElement.setAttribute('data-theme', saved);
-  updateThemeUI(saved);
-})();
-
 function updateThemeUI(theme) {
-  const icon = document.querySelector('.theme-icon');
-  const label = document.querySelector('.theme-label');
-  if (icon) icon.textContent = theme === 'dark' ? '☀' : '☾';
-  if (label) label.textContent = theme === 'dark' ? 'Light' : 'Dark';
+  var icons  = document.querySelectorAll('.theme-icon');
+  var labels = document.querySelectorAll('.theme-label');
+  icons.forEach(function(el)  { el.textContent = theme === 'dark' ? '☀' : '☾'; });
+  labels.forEach(function(el) { el.textContent = theme === 'dark' ? 'Light' : 'Dark'; });
 }
 
 function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme');
-  const next = current === 'dark' ? 'light' : 'dark';
+  var current = document.documentElement.getAttribute('data-theme');
+  var next = current === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('cz-theme', next);
   updateThemeUI(next);
@@ -27,7 +23,7 @@ function toggleTheme() {
 
 /* ── Mobile menu ── */
 function toggleMobileMenu() {
-  const menu = document.getElementById('mobile-menu');
+  var menu = document.getElementById('mobile-menu');
   if (menu) menu.classList.toggle('open');
 }
 
@@ -47,8 +43,6 @@ function fmtShort(v) {
   return String(v);
 }
 
-function fmtPct(v) { return v.toFixed(2) + '%'; }
-
 /* ── CSS variable reader ── */
 function cssVar(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
@@ -56,7 +50,7 @@ function cssVar(name) {
 
 /* ── Chart theme ── */
 function chartTheme() {
-  const dk = document.documentElement.getAttribute('data-theme') === 'dark';
+  var dk = document.documentElement.getAttribute('data-theme') === 'dark';
   return {
     bg:   dk ? '#161d28' : '#ffffff',
     bc:   dk ? '#1e2733' : '#e2e8f0',
@@ -68,48 +62,64 @@ function chartTheme() {
 }
 
 /* ── Get number from input ── */
-function gn(id) { return parseFloat(document.getElementById(id).value) || 0; }
+function gn(id) {
+  var el = document.getElementById(id);
+  return el ? (parseFloat(el.value) || 0) : 0;
+}
 
 /* ── Set text ── */
-function st(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
+function st(id, v) {
+  var e = document.getElementById(id);
+  if (e) e.textContent = v;
+}
 
 /* ── Sync number → range ── */
 function syncNR(nId, rId, lo, hi) {
-  const v = parseFloat(document.getElementById(nId).value) || 0;
-  const clamped = Math.max(lo, Math.min(hi, v));
-  document.getElementById(rId).value = clamped;
+  var el = document.getElementById(nId);
+  if (!el) return;
+  var v = parseFloat(el.value) || 0;
+  var clamped = Math.max(lo, Math.min(hi, v));
+  var r = document.getElementById(rId);
+  if (r) r.value = clamped;
   updateSliderFill(rId);
 }
+
 /* ── Sync range → number ── */
 function syncRN(rId, nId) {
-  document.getElementById(nId).value = document.getElementById(rId).value;
+  var r = document.getElementById(rId);
+  var n = document.getElementById(nId);
+  if (r && n) n.value = r.value;
   updateSliderFill(rId);
 }
 
 /* ── Slider fill ── */
 function updateSliderFill(id) {
-  const el = document.getElementById(id);
+  var el = document.getElementById(id);
   if (!el) return;
-  const min = parseFloat(el.min) || 0;
-  const max = parseFloat(el.max) || 100;
-  const val = parseFloat(el.value) || 0;
-  const pct = ((val - min) / (max - min)) * 100;
+  var min = parseFloat(el.min) || 0;
+  var max = parseFloat(el.max) || 100;
+  var val = parseFloat(el.value) || 0;
+  var pct = ((val - min) / (max - min)) * 100;
   el.style.setProperty('--fill', pct.toFixed(2) + '%');
 }
 
-/* ── Init all sliders on page load ── */
+/* ── Init all sliders ── */
 function initSliders() {
-  document.querySelectorAll('input[type="range"]').forEach(el => updateSliderFill(el.id));
+  document.querySelectorAll('input[type="range"]').forEach(function(el) {
+    updateSliderFill(el.id);
+  });
 }
 
-/* ── Unified chart factory ── */
-const _charts = {};
+/* ── Chart factory ── */
+var _charts = {};
 function mkChart(id, labels, datasets) {
   if (_charts[id]) { _charts[id].destroy(); }
-  const t = chartTheme();
-  _charts[id] = new Chart(document.getElementById(id), {
+  var t = chartTheme();
+  var canvas = document.getElementById(id);
+  if (!canvas) return;
+  _charts[id] = new Chart(canvas, {
     type: 'line',
-    data: { labels, datasets },
+    data: { labels: labels, datasets: datasets },
     options: {
       responsive: true, maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
@@ -119,39 +129,33 @@ function mkChart(id, labels, datasets) {
           backgroundColor: t.bg, borderColor: t.bc, borderWidth: 1,
           titleColor: t.tc, bodyColor: t.tx, padding: 12, cornerRadius: 10,
           callbacks: {
-            label: c => '  ' + c.dataset.label + ': ' + fmt(c.parsed.y)
+            label: function(c) { return '  ' + c.dataset.label + ': ' + fmt(c.parsed.y); }
           }
         }
       },
       scales: {
         x: {
           grid: { color: t.grid },
-          ticks: {
-            font: { family: "'Geist Mono', monospace", size: 10, weight: '500' },
-            color: t.tick, autoSkip: true, maxTicksLimit: 10
-          }
+          ticks: { font: { family: "'Geist Mono', monospace", size: 10, weight: '500' }, color: t.tick, autoSkip: true, maxTicksLimit: 10 }
         },
         y: {
           grid: { color: t.grid },
-          ticks: {
-            font: { family: "'Geist Mono', monospace", size: 10, weight: '500' },
-            color: t.tick, callback: v => fmtShort(v)
-          }
+          ticks: { font: { family: "'Geist Mono', monospace", size: 10, weight: '500' }, color: t.tick, callback: function(v) { return fmtShort(v); } }
         }
       }
     }
   });
 }
 
-/* ── Donut chart (native canvas) ── */
+/* ── Donut chart ── */
 function drawDonut(id, segments) {
-  const canvas = document.getElementById(id);
+  var canvas = document.getElementById(id);
   if (!canvas) return;
-  const size = 140, cx = 70, cy = 70, R = 56, W = 18;
+  var size = 140, cx = 70, cy = 70, R = 56, W = 18;
   canvas.width = size; canvas.height = size;
-  const ctx = canvas.getContext('2d');
+  var ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, size, size);
-  const total = segments.reduce((s, seg) => s + Math.max(0, seg.value), 0);
+  var total = segments.reduce(function(s, seg) { return s + Math.max(0, seg.value); }, 0);
   if (!total) {
     ctx.beginPath();
     ctx.arc(cx, cy, R, 0, Math.PI * 2);
@@ -161,14 +165,14 @@ function drawDonut(id, segments) {
     ctx.fill();
     return;
   }
-  const GAP = 0.012;
-  let start = -Math.PI / 2;
-  segments.forEach(seg => {
-    const v = Math.max(0, seg.value);
+  var GAP = 0.012;
+  var start = -Math.PI / 2;
+  segments.forEach(function(seg) {
+    var v = Math.max(0, seg.value);
     if (v < 0.001) return;
-    const sweep = (v / total) * Math.PI * 2;
+    var sweep = (v / total) * Math.PI * 2;
     if (sweep < 0.001) return;
-    const end = start + sweep - GAP;
+    var end = start + sweep - GAP;
     ctx.beginPath();
     ctx.arc(cx, cy, R, start, end);
     ctx.arc(cx, cy, R - W, end, start, true);
@@ -178,3 +182,19 @@ function drawDonut(id, segments) {
     start += sweep;
   });
 }
+
+/* ── INIT: runs after DOM is ready ── */
+document.addEventListener('DOMContentLoaded', function() {
+  /* Restore saved theme and update UI */
+  var saved = localStorage.getItem('cz-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeUI(saved);
+
+  /* Close mobile menu on link click */
+  document.querySelectorAll('.mobile-link').forEach(function(l) {
+    l.addEventListener('click', function() {
+      var menu = document.getElementById('mobile-menu');
+      if (menu) menu.classList.remove('open');
+    });
+  });
+});
