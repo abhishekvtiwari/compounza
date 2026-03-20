@@ -294,8 +294,8 @@ function compute() {
   const mr  = r / 100 / 12;
 
   // Update displays
-  st('sip-nm-disp', '₹' + M0.toLocaleString('en-IN'));
-  st('sip-nl-disp', '₹' + L.toLocaleString('en-IN'));
+  st('sip-nm-disp', fmt(M0));
+  st('sip-nl-disp', fmt(L));
   st('sip-nr-disp', r.toFixed(1) + '%');
   st('sip-ny-disp', Y + (Y === 1 ? ' yr' : ' yrs'));
   st('sip-ns-disp', gn('sip-ns').toFixed(0) + '%');
@@ -327,7 +327,7 @@ function compute() {
   st('sip-fv',       fmt(corpus));
   st('sip-fv-x',     wr.toFixed(2) + '× of invested');
   st('sip-inv',      fmt(totalInv));
-  st('sip-inv-sub',  Y + ' years @ ₹' + M0.toLocaleString('en-IN') + '/mo');
+  st('sip-inv-sub',  Y + ' years @ ' + fmt(M0) + '/mo');
   st('sip-gain',     fmt(gain));
   st('sip-gain-pct', gainPct.toFixed(1) + '% return');
   st('sip-xirr',     approxXIRR.toFixed(1) + '% p.a.');
