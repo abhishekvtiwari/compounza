@@ -885,7 +885,7 @@
           <div class="f-label">Monthly CC Dues / EMI</div>
           <div class="num-input-wrap">
             <span class="num-input-prefix">₹</span>
-            <input type="number" id="sa-cc" value="0" min="0" step="500" oninput="fmtInput(this,'fmt-cc')" onblur="validateLoan('cc')">
+            <input type="number" id="sa-cc-emi" value="0" min="0" step="500" oninput="fmtInput(this,'fmt-cc')" onblur="validateLoan('cc')">
           </div>
           <div class="f-fmt" id="fmt-cc"></div>
         </div>
@@ -1298,7 +1298,7 @@ function runAnalysis() {
     if (!validateLoan(t)) errors.push(`${t.charAt(0).toUpperCase()+t.slice(1)} loan: enter months remaining (or set EMI to 0).`);
   });
 
-  const totalEMI = v('sa-home-emi') + v('sa-car-emi') + v('sa-personal-emi') + v('sa-cc');
+  const totalEMI = v('sa-home-emi') + v('sa-car-emi') + v('sa-personal-emi') + v('sa-cc-emi');
   const totalExp = v('sa-fixed') + v('sa-variable') + totalEMI;
   if (totalExp > income * 1.5) {
     errors.push('⚠️ Your total expenses significantly exceed your income. Please review the numbers.');
@@ -1345,7 +1345,7 @@ function compute() {
       { name:'Home Loan',     icon:'🏠', emi:v('sa-home-emi'),     tenure:v('sa-home-tenure'),     bal:v('sa-home-bal')     },
       { name:'Car Loan',      icon:'🚗', emi:v('sa-car-emi'),      tenure:v('sa-car-tenure'),      bal:v('sa-car-bal')      },
       { name:'Personal Loan', icon:'💳', emi:v('sa-personal-emi'), tenure:v('sa-personal-tenure'), bal:v('sa-personal-bal') },
-      { name:'Credit Card',   icon:'💳', emi:v('sa-cc'),           tenure:v('sa-cc-tenure'),           bal:v('sa-cc-bal')       },
+      { name:'Credit Card',   icon:'💳', emi:v('sa-cc-emi'),       tenure:v('sa-cc-tenure'),           bal:v('sa-cc-bal')       },
     ].filter(l => l.emi > 0),
   };
 
@@ -1765,7 +1765,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   // Init fmt displays
   ['income','fixed','variable','savings','invest',
-   'home-emi','home-bal','car-emi','car-bal','personal-emi','personal-bal','cc','cc-bal'].forEach(id => {
+   'home-emi','home-bal','car-emi','car-bal','personal-emi','personal-bal','cc-emi','cc-bal'].forEach(id => {
     const el = document.getElementById(`sa-${id}`);
     const fmt_id = `fmt-${id}`;
     if (el && document.getElementById(fmt_id)) {
