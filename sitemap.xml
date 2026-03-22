@@ -1,33 +1,52 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Homepage -->
   <url>
     <loc>https://compounza.in/</loc>
-    <lastmod>2025-03-15</lastmod>
-    <changefreq>monthly</changefreq>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
+
+  <!-- Smart Financial Advisor -->
+  <url>
+    <loc>https://compounza.in/smart-advisor.html</loc>
+    <lastmod>2025-03-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- SIP Calculator -->
   <url>
     <loc>https://compounza.in/sip-calculator.html</loc>
-    <lastmod>2025-03-15</lastmod>
+    <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
+
+  <!-- EMI Calculator -->
   <url>
     <loc>https://compounza.in/emi-calculator.html</loc>
-    <lastmod>2025-03-15</lastmod>
+    <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
   </url>
+
+  <!-- Compound Interest Calculator -->
   <url>
     <loc>https://compounza.in/compound-interest-calculator.html</loc>
-    <lastmod>2025-03-15</lastmod>
+    <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+
+  <!-- Simple Interest Calculator -->
   <url>
     <loc>https://compounza.in/simple-interest-calculator.html</loc>
-    <lastmod>2025-03-15</lastmod>
+    <lastmod>2025-03-22</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
+
 </urlset>
